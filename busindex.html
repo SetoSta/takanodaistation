@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>鷹の台駅 平日ダイヤ</title>
+  <style>
+    body { 
+      font-family: sans-serif; 
+      padding: 1em; 
+      font-size: 18px;   /* 基本文字大きめ */
+    }
+    h1 { font-size: 1.5em; margin-bottom: 0.5em; }
+    ul { list-style: none; padding: 0; font-size: 1.2em; }
+    li { margin: 0.5em 0; }
+    .options { margin: 1em 0; }
+    label { display: block; margin: 0.5em 0; }  /* 選択肢は縦並び */
+    button {
+      font-size: 1.2em;
+      padding: 0.6em 1em;
+      margin-top: 1em;
+      width: 100%;         /* ボタン幅いっぱい */
+      border-radius: 8px;
+      border: none;
+      background: #0078d7;
+      color: white;
+    }
+    button:active { background: #005ea0; }
+    #refTime, #nowTime { 
+      font-weight: bold; 
+      color: #0066cc; 
+      margin-top: 1em; 
+    }
+  </style>
+</head>
+<body>
+  <h1>鷹の台駅 平日ダイヤ</h1>
+
+  <div class="options">
+    <p>現在地を選択してください:</p>
+    <label><input type="radio" name="place" value="school" checked> 学校（徒歩10分）</label>
+    <label><input type="radio" name="place" value="lawson"> ローソン（徒歩5分）</label>
+  </div>
+
+  <button id="showBtn">次の列車を表示</button>
+
+  <p id="nowTime"></p>
+  <p id="refTime"></p>
+  <div id="trainList"></div>
+
+  <script>
+    // 鷹の台駅 平日ダイヤ
+    const trainSchedule = [
+      "05:10","05:31","05:47",
+      "06:02","06:17","06:27","06:38","06:48","06:56",
+      "07:05","07:12","07:20","07:27","07:35","07:42","07:51","07:59",
+      "08:06","08:14","08:21","08:29","08:36","08:46","08:54",
+      "09:02","09:13","09:23","09:33","09:43","09:53",
+      "10:03","10:13","10:23","10:33","10:43","10:53",
+      "11:03","11:13","11:23","11:33","11:43","11:53",
+      "12:03","12:13","12:23","12:33","12:43","12:53",
+      "13:03","13:13","13:23","13:33","13:43","13:53",
+      "14:03","14:13","14:23","14:33","14:43","14:53",
+      "15:03","15:13","15:23","15:33","15:43","15:53",
+      "16:04","16:14","16:25","16:34","16:45","16:55",
+      "17:05","17:15","17:25","17:35","17:45","17:55",
+      "18:05","18:15","18:25","18:35","18:45","18:55",
+      "19:05","19:15","19:25","19:35","19:45","19:55",
+      "20:05","20:15","20:25","20:35","20:45","20:55",
+      "21:05","21:15","21:25","21:36","21:48",
+      "22:06","22:21","22:37","22:51",
+      "23:07","23:21","23:36","23:52",
+      "00:10"
+    ].map(t => ({ time: t }));
+
+    // 徒歩時間（分）
+    const walkTimes = {
+      school: 10,
+      lawson: 5
+    };
+
+    function getNextTrains(times, refMinutes, count = 5) {
+      return times.filter(train => {
+        const [h, m] = train.time.split(":").map(Number);
+        return h * 60 + m >= refMinutes;
+      }).slice(0, count);
+    }
+
+    function displayTrains(nextTrains, nowStr, refTimeStr) {
+      document.getElementById("nowTime").textContent = `現在時刻: ${nowStr}`;
+      document.getElementById("refTime").textContent = `駅に到着できる時刻: ${refTimeStr} 以降`;
+
+      const container = document.getElementById("trainList");
+      container.innerHTML = "";
+      if (nextTrains.length === 0) {
+        container.innerHTML = "<p>この時間以降の列車はありません</p>";
+        return;
+      }
+      const ul = document.createElement("ul");
+      nextTrains.forEach(train => {
+        const li = document.createElement("li");
+        li.textContent = `${train.time}`;
+        ul.appendChild(li);
+      });
+      container.appendChild(ul);
+    }
+
+    document.getElementById("showBtn").addEventListener("click", () => {
+      const place = document.querySelector("input[name='place']:checked").value;
+      const walk = walkTimes[place];
+
+      const now = new Date();
+      const nowH = String(now.getHours()).padStart(2,'0');
+      const nowM = String(now.getMinutes()).padStart(2,'0');
+      const nowStr = `${nowH}:${nowM}`;
+
+      const refMinutes = now.getHours() * 60 + now.getMinutes() + walk;
+      const refH = Math.floor(refMinutes / 60) % 24;
+      const refM = refMinutes % 60;
+      const refTimeStr = `${String(refH).padStart(2,'0')}:${String(refM).padStart(2,'0')}`;
+
+      const next = getNextTrains(trainSchedule, refMinutes);
+      displayTrains(next, nowStr, refTimeStr);
+    });
+  </script>
+</body>
+</html>
